@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode/utf8"
 )
 
 var dictionary = []string{
@@ -18,42 +17,77 @@ var dictionary = []string{
 }
 
 func main() {
-	var i int = 0
-	//usedwords := []int{}
-	state, err := os.ReadFile("./states/hangman" + strconv.Itoa(i))
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("state", strconv.Itoa(i), "\n ", string(state)) // oyun durumunu yazdır -> state0
-
-	// * tahmin ettiğiniz kelimeyi yazdırın
-	// * adam asmaca durumunu yazdır
-
-	rand.Seed(time.Now().UnixMilli()) // tahmin etmemiz gereken bir kelime türet (rand.Seed(time.Now().UnixNano()))
-	a := (rand.Intn(len(dictionary)))
-	Word := dictionary[a]
-	fmt.Println(Word)
-	SelectedWorDashes := strings.Repeat("_", utf8.RuneCountInString(Word))
-	fmt.Println(SelectedWorDashes)
-	SlicedWordDashes := strings.Split(SelectedWorDashes, "")
-	fmt.Println(SlicedWordDashes[0])
-
-	fmt.Println("Enter a word: ") // kullanıcı girdisini oku
-	var first string
-	fmt.Scanln(&first)
-
+	usedwords := []string{}
+	alphabeth := []string{}
 	for i := 1; i < 27; i++ {
-		a := toCharStr(i)
-		fmt.Println(a)
+		WordsOfAlphabeth := toCharStr(i)
+		WordsOfAlphabeth = strings.ToLower(WordsOfAlphabeth)
+		alphabeth = append(alphabeth, WordsOfAlphabeth)
+
 	}
 
-	// * validate (sadece harf olarak validate edilmeli)
-	// harf doğrusa tahmin olarak yerine yazacaksın ( m a _ a) // birden fazla harf varsa tamamlayacak.
-	// * doğruysa, tahmin edilen harfleri güncelleyin
-	// * yanlışsa, adam asmaca durumunu güncelleyin
-	// kelime tahmin edilirse -> kazanırsın
-	// adam asmaca tamamlandıysa -> kaybedersiniz
+	var statecounter int = 0
+	rand.Seed(time.Now().UnixMilli())
+	RandomNumber := (rand.Intn(len(dictionary)))
+	Word := dictionary[RandomNumber]
+	SlicedWord := strings.Split(Word, "")
+	SlicedWordDashes := []string{}
+	for index := 0; index < len(SlicedWord); index++ {
+		SlicedWordDashes = append(SlicedWordDashes, "_")
+	}
+
+	for {
+		fmt.Println("Word: ", SlicedWordDashes)
+		if !contains(SlicedWordDashes, "_") {
+			fmt.Println("YOU WİN!!!")
+			break
+		}
+
+		state, err := os.ReadFile("./states/hangman" + strconv.Itoa(statecounter))
+		fmt.Println("state", strconv.Itoa(statecounter), "\n ", string(state))
+		if err != nil {
+			panic(err)
+		}
+		if statecounter == 9 {
+			fmt.Println("You LOSE !!!")
+			break
+		} else {
+
+			fmt.Println("Used words: ", usedwords)
+			fmt.Println("Enter a word: ")
+			var EnteredWord string
+			fmt.Scanln(&EnteredWord)
+			if contains(alphabeth, EnteredWord) && !contains(usedwords, EnteredWord) {
+				usedwords = append(usedwords, EnteredWord)
+				if contains(SlicedWord, EnteredWord) {
+					for index := 0; index < len(SlicedWord); index++ {
+
+						if SlicedWord[index] == EnteredWord {
+							SlicedWordDashes[index] = EnteredWord
+						}
+
+					}
+				} else {
+					fmt.Println("WRONG WORD!!!")
+					statecounter++
+
+				}
+
+			} else {
+				fmt.Println("Invalid word!!!")
+			}
+
+		}
+	}
 }
 func toCharStr(i int) string {
 	return string(rune('A' - 1 + i))
+}
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
